@@ -82,15 +82,16 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
 #view { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
 .status { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 10px; font: 11px var(--font-mono); color: var(--muted); background: linear-gradient(transparent, rgba(0,0,0,.65)); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.side { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
+.side { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; overflow-y: auto; }
+.side > .card { flex-shrink: 0; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; min-width: 0; }
 .card h3 { margin: 0 0 6px; font: 600 11px var(--font-body); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
-#pv { display: block; width: 268px; max-width: 100%; height: auto; aspect-ratio: 268 / 200; image-rendering: pixelated; border-radius: 6px; margin: 0 auto 6px; background: #101016; }
+#pv { display: block; width: min(268px, 100%, calc(24vh * 1.34)); max-width: 100%; height: auto; aspect-ratio: 268 / 200; image-rendering: pixelated; border-radius: 6px; margin: 0 auto 6px; background: #101016; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .tabs { display: flex; gap: 2px; margin-bottom: 6px; }
 .tabs button { flex: 1; background: var(--panel2); border: 0; padding: 5px 4px; border-radius: 6px 6px 0 0; color: var(--muted); }
 .tabs button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.tabcard { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.tabcard { flex: 1 0 auto; min-height: 230px; overflow: visible; display: flex; flex-direction: column; }
 .pane { display: none; flex-direction: column; gap: 6px; min-width: 0; }
 .pane.on { display: flex; }
 #wheelpop { position: fixed; z-index: 40; width: 236px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 44px rgba(0,0,0,.55); }
@@ -147,6 +148,11 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
   .colors { margin-top: 0; padding: 0; flex: 1 1 160px; }
   .stage { height: 62vh; min-height: 320px; }
   #pv { width: 100%; }
+}
+@media (max-height: 780px) {
+  #pv { width: min(268px, 100%, calc(15vh * 1.34)); margin-bottom: 4px; }
+  .card { padding: 6px; }
+  .tabcard { min-height: 260px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -827,12 +833,16 @@ function layoutView() {
 function fitView() {
   const { w, h } = S.D;
   S.zoomed = false;
-  S.zoom = clamp(Math.floor(Math.min((S.cw - 40) / w, (S.ch - 40) / h)), 1, 64);
+  const fz = Math.min((S.cw - 40) / w, (S.ch - 40) / h);
+  S.zoom = fz >= 1 ? clamp(Math.floor(fz), 1, 64) : Math.max(0.02, Math.floor(fz * 1000) / 1000);
   S.ox = Math.round((S.cw - w * S.zoom) / 2); S.oy = Math.round((S.ch - h * S.zoom) / 2);
   redraw();
 }
+const ZLEVELS = [0.02, 0.03, 0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64];
+const zfmt = (z) => (z < 1 ? Math.round(z * 1000) / 10 + '%' : z + 'x');
 function zoomAt(sx, sy, d) {
-  const z0 = S.zoom; let z1 = z0 < 8 ? z0 + d : z0 + 2 * d; z1 = clamp(z1, 1, 64);
+  const z0 = S.zoom; let z1 = z0;
+  if (d > 0) z1 = ZLEVELS.find((v) => v > z0 + 1e-6) || 64; else { for (let i = ZLEVELS.length - 1; i >= 0; i--) if (ZLEVELS[i] < z0 - 1e-6) { z1 = ZLEVELS[i]; break; } if (z1 === z0) z1 = ZLEVELS[0]; }
   if (z1 === z0) return;
   const ix = (sx - S.ox) / z0, iy = (sy - S.oy) / z0;
   S.zoomed = true; S.zoom = z1; S.ox = Math.round(sx - ix * z1); S.oy = Math.round(sy - iy * z1); redraw();
@@ -871,7 +881,7 @@ function floatOverride() { return S.fl ? { [S.li]: floatComposite() } : null; }
 function drawView() {
   const D = S.D, { w, h } = D, z = S.zoom, ox = S.ox, oy = S.oy, g = vctx;
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  g.imageSmoothingEnabled = false;
+  g.imageSmoothingEnabled = z < 1; g.imageSmoothingQuality = 'medium';
   g.fillStyle = '#0b0b10'; g.fillRect(0, 0, S.cw, S.ch);
   g.save(); g.translate(ox, oy);
   g.fillStyle = backdropPattern(g, $('#cbg') ? $('#cbg').value : 'Checker', Math.max(4, Math.min(12, z)));
@@ -926,7 +936,7 @@ function cross(px, py, r) {
 let redrawQ = false;
 function redraw() {
   if (redrawQ) return; redrawQ = true;
-  requestAnimationFrame(() => { redrawQ = false; try { drawView(); } catch (e) { status('Render error: ' + e.message); console.error(e); } if (!S.playing) refreshPreview(); $('#zlabel').textContent = S.zoom + 'x'; });
+  requestAnimationFrame(() => { redrawQ = false; try { drawView(); } catch (e) { status('Render error: ' + e.message); console.error(e); } if (!S.playing) refreshPreview(); $('#zlabel').textContent = zfmt(S.zoom); });
 }
 
 /* ===================================================================== painting */
@@ -1555,7 +1565,7 @@ function onDown(e) {
 }
 function onMove(e) {
   const [x, y] = pxi(e); S.mouse = [x, y];
-  if (x >= 0 && y >= 0 && x < S.D.w && y < S.D.h) status('x ' + x + '  y ' + y + '   |   zoom ' + S.zoom + 'x   |   ' + S.D.w + 'x' + S.D.h + ' px   |   frame ' + (S.fi + 1) + '/' + S.D.nframes);
+  if (x >= 0 && y >= 0 && x < S.D.w && y < S.D.h) status('x ' + x + '  y ' + y + '   |   zoom ' + zfmt(S.zoom) + '   |   ' + S.D.w + 'x' + S.D.h + ' px   |   frame ' + (S.fi + 1) + '/' + S.D.nframes);
   if (S.pan) { S.ox = S.pan.ox + e.clientX - S.pan.x; S.oy = S.pan.oy + e.clientY - S.pan.y; redraw(); return; }
   if (S.stroke) { if (['pencil', 'eraser', 'shade'].includes(S.tool)) strokeFree(x, y); else shapePreview(e); }
   else if (S.selStart) selMove(x, y);
