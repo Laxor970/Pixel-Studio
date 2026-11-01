@@ -1,5 +1,9 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pixel Studio</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap">
@@ -89,10 +93,20 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
 .tabcard { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .pane { display: none; flex-direction: column; gap: 6px; min-width: 0; }
 .pane.on { display: flex; }
-.pal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
-.pal button { height: 24px; border-radius: 4px; border: 2px solid transparent; padding: 0; outline: 1px solid rgba(0,0,0,.5); }
-.pal button.p { border-color: #fff; }
-.pal button.s { border-color: var(--accent2); }
+#wheelpop { position: fixed; z-index: 40; width: 236px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 44px rgba(0,0,0,.55); }
+#wheelpop[hidden] { display: none; }
+.wh-head { display: flex; justify-content: space-between; align-items: center; }
+#wheel { width: 200px; height: 200px; align-self: center; touch-action: none; cursor: crosshair; }
+.wh-v { display: grid; grid-template-columns: auto minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.wh-v output { font: 12px var(--font-mono); text-align: right; }
+.wh-ramp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.wh-ramp button { height: 28px; border: 2px solid rgba(0,0,0,.35); border-radius: 6px; padding: 0; }
+.pct { font: 12px var(--font-mono); min-width: 38px; }
+.pal { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 8px; }
+.ramp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; border-radius: 6px; overflow: hidden; }
+.pal button { height: 22px; border: 0; border-radius: 0; padding: 0; }
+.pal button.p { box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px #000; }
+.pal button.s { box-shadow: inset 0 0 0 2px var(--accent2), inset 0 0 0 3px #000; }
 .hint { color: var(--muted); font-size: 12px; margin: 0; }
 .layers { display: flex; flex-direction: column; gap: 2px; }
 .layer { display: flex; align-items: center; gap: 6px; background: var(--panel2); border-radius: 6px; padding: 4px 6px; cursor: pointer; }
@@ -100,7 +114,7 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
 .layer .eye { width: 38px; flex: 0 0 auto; text-align: left; font: 11px var(--font-mono); color: var(--muted); background: none; border: 0; padding: 0; }
 .layer .eye.v { color: var(--good); }
 .layer .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sl { display: grid; grid-template-columns: 52px minmax(0, 1fr) 34px; gap: 6px; align-items: center; }
+.sl { display: grid; grid-template-columns: 64px minmax(0, 1fr) 42px; gap: 6px; align-items: center; }
 .sl output { font: 12px var(--font-mono); text-align: right; }
 
 .timeline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; min-width: 0; }
@@ -123,6 +137,7 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
 #toast[hidden] { display: none; }
 
 @media (max-width: 900px) {
+  #wheelpop { max-width: calc(100% - 16px); }
   body { overflow: auto; height: auto; }
   html, body { height: auto; }
   .app { height: auto; }
@@ -135,6 +150,9 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+<style>[hidden]{display:none!important}html,body{margin:0}</style>
+</head>
+<body>
 
 <div class="app">
   <header class="bar top" id="menubar">
@@ -166,16 +184,23 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
     <button class="btn" id="b-fliph">Flip H</button>
     <button class="btn" id="b-flipv">Flip V</button>
     <span class="vsep"></span>
+    <label class="o">Stretch W <input type="range" id="o-sw" min="10" max="300" value="100" style="width:100px"><output id="o-sw-v" class="pct">100%</output></label>
+    <label class="o">H <input type="range" id="o-sh" min="10" max="300" value="100" style="width:100px"><output id="o-sh-v" class="pct">100%</output></label>
+    <button class="btn" id="b-narrow" title="Squeeze to 70% width: a quick side-view look for walk and idle frames">Narrow 70%</button>
+    <button class="btn" id="b-sreset">Reset size</button>
+    <span class="vsep"></span>
     <label class="o">Light <select id="o-light"></select></label>
     <button class="btn" id="b-autoshade">Auto-shade</button>
     <button class="btn" id="b-outline">Outline</button>
+    <button class="btn" id="b-vib" title="Make the colours of the selection or layer richer">Vibrance +</button>
+    <button class="btn" id="b-vibm" title="Make them calmer">Vibrance -</button>
   </div>
 
   <main class="mid">
     <aside class="tools" id="tools">
       <div class="colors">
-        <div class="sw" id="sw-p" title="Primary colour (click to change)"></div>
-        <div class="sw" id="sw-s" title="Secondary colour (click to change)"></div>
+        <div class="sw" id="sw-p" title="Primary colour (click to open the colour wheel)"></div>
+        <div class="sw" id="sw-s" title="Secondary colour (click to open the colour wheel)"></div>
         <small>Primary</small><small>Second.</small>
         <button class="btn" id="b-swap" style="grid-column:1/-1">Swap (X)</button>
       </div>
@@ -209,11 +234,11 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
           <div class="pal" id="pal"></div>
           <div class="row">
             <input type="text" id="o-hex" value="#62b653" style="width:84px;font-family:var(--font-mono)" aria-label="Hex colour">
+            <button class="btn primary" id="b-wheel">Colour wheel</button>
             <button class="btn" id="b-ramp">+ Ramp</button>
             <button class="btn" id="b-palimg">From image...</button>
           </div>
-          <p class="hint">Left click = primary, right click = secondary, double-click = edit a swatch. Each row is a 4-shade ramp.</p>
-          <input type="color" id="o-colorpick" hidden>
+          <p class="hint">Left click = primary, right click = secondary, double-click a swatch to tune it on the colour wheel. Each pair of boxes on a row is one ramp of 4 shades, dark to light.</p>
         </div>
 
         <div class="pane" id="pane-lay">
@@ -231,6 +256,8 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
           <div class="sl"><span>Angle</span><input type="range" id="r-a" min="-180" max="180" value="0"><output id="r-a-v">0</output></div>
           <div class="sl"><span>Move X</span><input type="range" id="r-x" min="-64" max="64" value="0"><output id="r-x-v">0</output></div>
           <div class="sl"><span>Move Y</span><input type="range" id="r-y" min="-64" max="64" value="0"><output id="r-y-v">0</output></div>
+          <div class="sl"><span>Stretch W</span><input type="range" id="r-sw" min="10" max="300" value="100"><output id="r-sw-v">100%</output></div>
+          <div class="sl"><span>Stretch H</span><input type="range" id="r-sh" min="10" max="300" value="100"><output id="r-sh-v">100%</output></div>
           <div class="row">
             <button class="btn" id="r-pivot">Set pivot (click canvas)</button><button class="btn" id="r-reset">Reset</button><button class="btn" id="r-bake">Bake</button>
           </div>
@@ -240,7 +267,9 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
             <input type="number" id="r-n" min="1" max="30" value="2" aria-label="Number of in-betweens">
           </div>
           <button class="btn" id="r-swing">Swing layer (auto idle / walk cycle)...</button>
-          <p class="hint">Workflow: one body part per layer, set its pivot (shoulder, hip...), duplicate the frame, change Angle. In-betweens and Swing do the frames in between, and rotation stays crisp.</p>
+          <button class="btn" id="r-squash">Squash &amp; stretch cycle (idle breathing)...</button>
+          <button class="btn" id="r-stretchframe">Stretch whole frame (side view)...</button>
+          <p class="hint">Workflow: one body part per layer, set its pivot (shoulder, hip, feet), duplicate the frame, change Angle or Stretch. In-betweens, Swing and Squash do the frames in between. For idle breathing, put the pivot at the feet.</p>
         </div>
       </div>
     </aside>
@@ -252,6 +281,14 @@ input[type=range] { accent-color: var(--accent); min-width: 0; }
   </footer>
 </div>
 
+<div id="wheelpop" hidden role="dialog" aria-label="Colour wheel">
+  <div class="wh-head"><strong id="wh-title">Colour wheel</strong><button class="btn" id="wh-close">Done</button></div>
+  <canvas id="wheel" width="200" height="200"></canvas>
+  <label class="o wh-v">Brightness <input type="range" id="wh-v" min="0" max="100" value="100"><output id="wh-v-o">100</output></label>
+  <div class="row"><input type="text" id="wh-hex" value="#62e05a" aria-label="Hex colour" style="width:92px;font-family:var(--font-mono)"><select id="wh-target" aria-label="Which colour to edit"><option>Primary</option><option>Secondary</option></select></div>
+  <div class="wh-ramp" id="wh-ramp"></div>
+  <div class="row"><button class="btn" id="wh-addramp">Add as ramp</button><span class="hint">Click a shade to use it.</span></div>
+</div>
 <div id="modal" hidden><div id="modalBox" role="dialog" aria-modal="true"></div></div>
 <div id="toast" hidden></div>
 <input type="file" id="f-open" hidden>
@@ -288,7 +325,7 @@ function hls2rgb(h, l, s) {
 function toward(h, target, amt) { const d = ((target - h + 0.5) % 1 + 1) % 1 - 0.5; return ((h + Math.max(-amt, Math.min(amt, d))) % 1 + 1) % 1; }
 function makeRamp(rgb) {
   const [h, l, s] = rgb2hls(rgb[0], rgb[1], rgb[2]);
-  const spec = [[-0.17, 0.667, 0.05, 0.95], [0, null, 0, 1], [0.13, 0.14, 0.03, 0.95], [0.27, 0.14, 0.05, 0.8]];
+  const spec = [[-0.17, 0.72, 0.06, 1], [0, null, 0, 1], [0.13, 0.13, 0.04, 1], [0.27, 0.13, 0.06, 0.9]];
   const out = spec.map(([dl, tgt, amt, sm]) => {
     const hh = tgt === null ? h : toward(h, tgt, amt);
     const c = hls2rgb(hh, clamp(l + dl, 0.05, 0.95), Math.min(1, s * sm));
@@ -313,18 +350,21 @@ function paletteFromImage(img, maxc = 40) {
   return ramps;
 }
 
-const DEFAULT_PALETTE = [
-  ['#2b5e3a', '#3d8a45', '#62b653', '#a3e06a'],
-  ['#4a2e2a', '#7a4a35', '#a8704a', '#d49a64'],
-  ['#2c3040', '#4d5468', '#7a8296', '#b4bcc9'],
-  ['#1d3f7a', '#2f72c4', '#4fa6e8', '#9ad6f7'],
-  ['#8a4a3a', '#c47a5a', '#e8a982', '#f8d4b0'],
-  ['#6b1d2a', '#a8323a', '#e0584a', '#f58a6e'],
-  ['#8a5a14', '#c98a1e', '#f0b83a', '#fbe27a'],
-  ['#3b2352', '#5f3a8a', '#8a5cc0', '#bd95e6'],
-  ['#14121c', '#2a2638', '#453f58', '#6c6580'],
-  ['#a8a8b8', '#c8c8d8', '#e8e8f0', '#ffffff'],
+const HAND_RAMPS = [
+  ['#1c7a38', '#2fb34a', '#62e05a', '#b6f26a'],   // grass
+  ['#6b3a2a', '#a15a36', '#d9853f', '#f5b86a'],   // dirt and wood
+  ['#2a2f4a', '#4f5a86', '#8493c4', '#c4d0f2'],   // stone
+  ['#1536a8', '#2b6fe8', '#3fc0ff', '#a6f0ff'],   // water
+  ['#a8472f', '#e0764e', '#ffa878', '#ffd9b0'],   // skin
+  ['#7a1030', '#d0282e', '#ff5a3c', '#ff9a70'],   // red
+  ['#a85a00', '#f09a00', '#ffd21f', '#fff27a'],   // gold
+  ['#3a1a7a', '#7a2fd0', '#b05cff', '#e0a8ff'],   // purple
+  ['#0c0a24', '#241a4a', '#4a3a7a', '#7a6cb0'],   // ink
+  ['#b8b8d0', '#dcdcf0', '#f2f2ff', '#ffffff'],   // light neutrals
 ];
+// 15 more ramps, one per hue, generated so every ramp is hue-shifted and vivid
+const HUE_RAMPS = [8, 28, 52, 75, 105, 140, 165, 185, 208, 228, 250, 275, 300, 325, 348];
+const DEFAULT_PALETTE = HAND_RAMPS.concat(HUE_RAMPS.map((deg) => makeRamp(hls2rgb(deg / 360, 0.52, 0.95).map((v) => Math.round(v * 255)))));
 const PATTERNS = {
   'Solid': () => true,
   'Checker 50%': (x, y) => (x + y) % 2 === 0,
@@ -351,10 +391,12 @@ function celCanvas(c) {
   return c.cv;
 }
 function imgToCanvas(img) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').putImageData(img, 0, 0); return c; }
-const isIdentity = (xf) => Math.abs(xf[0]) < 1e-9 && Math.abs(xf[1]) < 1e-9 && Math.abs(xf[2]) < 1e-9;
+const XF0 = () => [0, 0, 0, 100, 100];
+const xfPad = (x) => { const a = x.map(Number); while (a.length < 5) a.push(a.length < 3 ? 0 : 100); return a; };
+const isIdentity = (xf) => Math.abs(xf[0]) < 1e-9 && Math.abs(xf[1]) < 1e-9 && Math.abs(xf[2]) < 1e-9 && Math.abs((xf[3] == null ? 100 : xf[3]) - 100) < 1e-9 && Math.abs((xf[4] == null ? 100 : xf[4]) - 100) < 1e-9;
 
 function newLayer(name, w, h, n) {
-  return { name, visible: true, opacity: 100, cels: Array.from({ length: n }, () => newCel(w, h)), xf: Array.from({ length: n }, () => [0, 0, 0]), pivot: [w / 2, h / 2] };
+  return { name, visible: true, opacity: 100, cels: Array.from({ length: n }, () => newCel(w, h)), xf: Array.from({ length: n }, XF0), pivot: [w / 2, h / 2] };
 }
 function newDoc(w = 32, h = 32) {
   return { w, h, fps: 8, nframes: 1, layers: [newLayer('Layer 1', w, h, 1)], palette: DEFAULT_PALETTE.map((r) => r.slice()), rotMode: 'rotsprite', tcache: new Map(), plook: null };
@@ -405,21 +447,22 @@ function rotMul90(src, k) {
 }
 /* sample src through an inverse rotation. Returns ImageData of size ow x oh.
    p (dest pixel centre) -> q = c_src + R(-theta)(p - c_dst) */
-function sampleRotated(src, key, angle, ow, oh, cdx, cdy, csx, csy, sharp) {
+function sampleRotated(src, key, angle, ow, oh, cdx, cdy, csx, csy, sharp, ssx, ssy) {
+  ssx = ssx || 1; ssy = ssy || 1;
   const w = src.width, h = src.height, out = new ImageData(ow, oh), o32 = new Uint32Array(out.data.buffer);
   const th = angle * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
   if (sharp) {
     const s32 = new Uint32Array(src.data.buffer, src.data.byteOffset, w * h);
     for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++) {
       const vx = x + 0.5 - cdx, vy = y + 0.5 - cdy;
-      const sx = Math.floor(csx + vx * c + vy * s), sy = Math.floor(csy - vx * s + vy * c);
+      const sx = Math.floor(csx + (vx * c + vy * s) / ssx), sy = Math.floor(csy + (-vx * s + vy * c) / ssy);
       if (sx >= 0 && sy >= 0 && sx < w && sy < h) o32[y * ow + x] = s32[sy * w + sx];
     }
   } else {
     const b = scale8(src, key), bw = b.w, bh = b.h;
     for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++) {
       const vx = x + 0.5 - cdx, vy = y + 0.5 - cdy;
-      const sx = Math.floor((csx + vx * c + vy * s) * 8), sy = Math.floor((csy - vx * s + vy * c) * 8);
+      const sx = Math.floor((csx + (vx * c + vy * s) / ssx) * 8), sy = Math.floor((csy + (-vx * s + vy * c) / ssy) * 8);
       if (sx >= 0 && sy >= 0 && sx < bw && sy < bh) o32[y * ow + x] = b.a[sy * bw + sx];
     }
   }
@@ -437,12 +480,14 @@ function rotateExpand(img, angle, mode, key) {
   return sampleRotated(img, key, angle, ow, oh, ow / 2, oh / 2, w / 2, h / 2, sharp);
 }
 /* Same-size image rotated about pivot then shifted by (dx,dy). */
-function transformImage(img, angle, pivot, dx, dy, mode, key) {
+function transformImage(img, angle, pivot, dx, dy, mode, key, spx, spy) {
   const w = img.width, h = img.height, ix = Math.round(dx), iy = Math.round(dy);
+  const ssx = (spx == null ? 100 : spx) / 100, ssy = (spy == null ? 100 : spy) / 100;
   angle = ((angle % 360) + 360) % 360;
+  const scaled = Math.abs(ssx - 1) > 1e-9 || Math.abs(ssy - 1) > 1e-9;
   let rot;
-  if (angle < 1e-6) rot = img;
-  else rot = sampleRotated(img, key, angle, w, h, pivot[0], pivot[1], pivot[0], pivot[1], mode === 'sharp' || !big8ok(w, h));
+  if (angle < 1e-6 && !scaled) rot = img;
+  else rot = sampleRotated(img, key, angle, w, h, pivot[0], pivot[1], pivot[0], pivot[1], mode === 'sharp' || !big8ok(w, h), ssx, ssy);
   if (!ix && !iy) return rot === img ? cloneImg(img) : rot;
   const out = new ImageData(w, h), s32 = new Uint32Array(rot.data.buffer, rot.data.byteOffset, w * h), o32 = new Uint32Array(out.data.buffer);
   for (let y = 0; y < h; y++) { const sy = y - iy; if (sy < 0 || sy >= h) continue; for (let x = 0; x < w; x++) { const sx = x - ix; if (sx >= 0 && sx < w) o32[y * w + x] = s32[sy * w + sx]; } }
@@ -453,11 +498,11 @@ function transformImage(img, angle, pivot, dx, dy, mode, key) {
 function layerFrame(D, li, fi) {
   const L = D.layers[li], cel = L.cels[fi], xf = L.xf[fi];
   if (isIdentity(xf)) return { img: cel.img, cv: celCanvas(cel) };
-  const key = [cel.rev, xf[0].toFixed(3), xf[1].toFixed(3), xf[2].toFixed(3), L.pivot[0], L.pivot[1], D.rotMode, D.w, D.h].join('|');
+  const key = [cel.rev, xf[0].toFixed(3), xf[1].toFixed(3), xf[2].toFixed(3), xf[3], xf[4], L.pivot[0], L.pivot[1], D.rotMode, D.w, D.h].join('|');
   let hit = D.tcache.get(key);
   if (!hit) {
     if (D.tcache.size > 300) D.tcache.clear();
-    const img = transformImage(cel.img, xf[0], L.pivot, xf[1], xf[2], D.rotMode, 'c' + cel.rev);
+    const img = transformImage(cel.img, xf[0], L.pivot, xf[1], xf[2], D.rotMode, 'c' + cel.rev, xf[3], xf[4]);
     hit = { img, cv: imgToCanvas(img) };
     D.tcache.set(key, hit);
   }
@@ -479,7 +524,7 @@ function renderFrame(D, fi, override, into) {
 }
 function docAddFrame(D, index, src) {
   D.layers.forEach((L) => {
-    if (src == null) { L.cels.splice(index, 0, newCel(D.w, D.h)); L.xf.splice(index, 0, [0, 0, 0]); }
+    if (src == null) { L.cels.splice(index, 0, newCel(D.w, D.h)); L.xf.splice(index, 0, XF0()); }
     else { L.cels.splice(index, 0, newCel(D.w, D.h, cloneImg(L.cels[src].img))); L.xf.splice(index, 0, L.xf[src].slice()); }
   });
   D.nframes++;
@@ -493,7 +538,7 @@ function docInsertTweens(D, fi, n) {
   for (let k = 1; k <= n; k++) {
     docAddFrame(D, fi + k, fi + k - 1);
     const t = k / (n + 1);
-    D.layers.forEach((L, i) => { L.xf[fi + k] = [0, 1, 2].map((j) => xa[i][j] + (xb[i][j] - xa[i][j]) * t); });
+    D.layers.forEach((L, i) => { L.xf[fi + k] = [0, 1, 2, 3, 4].map((j) => xa[i][j] + (xb[i][j] - xa[i][j]) * t); });
   }
   return n;
 }
@@ -501,6 +546,11 @@ function docSwing(D, li, aMin, aMax, n) {
   while (D.nframes < n) docAddFrame(D, D.nframes, 0);
   const mid = (aMin + aMax) / 2, amp = (aMax - aMin) / 2, L = D.layers[li];
   for (let k = 0; k < n; k++) L.xf[k][0] = mid + amp * Math.sin(2 * Math.PI * k / n);
+}
+function docSquash(D, li, wMin, wMax, hMin, hMax, n) {
+  while (D.nframes < n) docAddFrame(D, D.nframes, 0);
+  const mw = (wMin + wMax) / 2, aw = (wMax - wMin) / 2, mh = (hMin + hMax) / 2, ah = (hMax - hMin) / 2, L = D.layers[li];
+  for (let k = 0; k < n; k++) { const t = Math.sin(2 * Math.PI * k / n); L.xf[k][3] = mw + aw * t; L.xf[k][4] = mh - ah * t; }
 }
 function docResize(D, nw, nh) {
   const ox = Math.floor((nw - D.w) / 2), oy = Math.floor((nh - D.h) / 2);
@@ -630,13 +680,13 @@ function encodeGIF(frames, w, h, delayCs) {
 
 /* ===================================================================== application state */
 const S = {
-  D: null, fi: 0, li: 0, tool: 'pencil', primary: [98, 182, 83, 255], secondary: [20, 18, 28, 255],
+  D: null, fi: 0, li: 0, tool: 'pencil', primary: [98, 224, 90, 255], secondary: [12, 10, 36, 255],
   sel: null, selTmp: null, selStart: null, selPts: [], selMode: 'new', fl: null, clip: null, frameClip: null, celClip: null,
   zoom: 12, ox: 20, oy: 20, stroke: null, pend: null, pan: null, space: false, mouse: [null, null], tfDrag: null,
   undo: [], redo: [], dirty: false, playing: false, playI: 0, playDir: 1, name: 'sprite', cw: 800, ch: 600, dpr: 1,
 };
 const O = {};
-['size', 'pat', 'two', 'sym', 'pp', 'fillshape', 'gfill', 'angle', 'rotmode', 'light', 'fps', 'loop', 'pbg', 'pz', 'tile', 'hex'].forEach((k) => { O[k] = $('#o-' + k); });
+['size', 'pat', 'two', 'sym', 'pp', 'fillshape', 'gfill', 'angle', 'rotmode', 'light', 'fps', 'loop', 'pbg', 'pz', 'tile', 'hex', 'sw', 'sh'].forEach((k) => { O[k] = $('#o-' + k); });
 const view = $('#view'), vctx = view.getContext('2d');
 const toolsEl = $('#tools');
 
@@ -723,10 +773,10 @@ const canvasBlob = (cv) => new Promise((res) => cv.toBlob(res, 'image/png'));
 function beginEdit(bake = true) {
   if (S.pend) return;
   const L = curLayer();
-  S.pend = { fi: S.fi, li: S.li, img: cloneImg(L.cels[S.fi].img), xf: L.xf[S.fi].slice() };
+  S.pend = { fi: S.fi, li: S.li, img: cloneImg(L.cels[S.fi].img), xf: L.xf[S.fi].slice(), sel: S.sel ? S.sel.slice() : null };
   if (bake && !isIdentity(L.xf[S.fi])) {
     const lf = layerFrame(S.D, S.li, S.fi);
-    L.cels[S.fi].img = cloneImg(lf.img); touch(L.cels[S.fi]); L.xf[S.fi] = [0, 0, 0];
+    L.cels[S.fi].img = cloneImg(lf.img); touch(L.cels[S.fi]); L.xf[S.fi] = XF0();
     refreshRig();
   }
 }
@@ -737,15 +787,16 @@ function endEdit() {
   const a = cel.img.data, b = p.img.data;
   let same = L.xf[p.fi].every((v, i) => v === p.xf[i]) && a.length === b.length;
   if (same) for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) { same = false; break; }
-  if (!same) { S.undo.push({ k: 'cel', fi: p.fi, li: p.li, img: p.img, xf: p.xf }); if (S.undo.length > 60) S.undo.shift(); S.redo.length = 0; markDirty(); }
+  if (!same) { S.undo.push({ k: 'cel', fi: p.fi, li: p.li, img: p.img, xf: p.xf, sel: p.sel }); if (S.undo.length > 60) S.undo.shift(); S.redo.length = 0; markDirty(); }
   tlDirty(); redraw();
 }
 function pushDocUndo() { S.undo.push({ k: 'doc', snap: docSnapshot(S.D) }); if (S.undo.length > 40) S.undo.shift(); S.redo.length = 0; markDirty(); }
 function applyEntry(e) {
   if (e.k === 'cel') {
     const L = S.D.layers[e.li], cel = L.cels[e.fi];
-    const inv = { k: 'cel', fi: e.fi, li: e.li, img: cloneImg(cel.img), xf: L.xf[e.fi].slice() };
+    const inv = { k: 'cel', fi: e.fi, li: e.li, img: cloneImg(cel.img), xf: L.xf[e.fi].slice(), sel: S.sel ? S.sel.slice() : null };
     cel.img = cloneImg(e.img); touch(cel); L.xf[e.fi] = e.xf.slice();
+    if ('sel' in e) S.sel = e.sel ? e.sel.slice() : null;
     return inv;
   }
   const inv = { k: 'doc', snap: docSnapshot(S.D) };
@@ -864,6 +915,7 @@ function drawView() {
     g.beginPath(); poly.forEach(([x, y], i) => (i ? g.lineTo(ox + x * z, oy + y * z) : g.moveTo(ox + x * z, oy + y * z))); g.closePath();
     g.setLineDash([5, 4]); g.strokeStyle = '#fff'; g.stroke(); g.setLineDash([]);
     cross(S.fl.pivot[0], S.fl.pivot[1], 6);
+    flHandles().forEach(([, lx, ly]) => { const [wx, wy] = flLocalToWorld(lx, ly), hx = S.ox + wx * z, hy = S.oy + wy * z; g.fillStyle = '#ffffff'; g.strokeStyle = '#14141c'; g.lineWidth = 1; g.fillRect(hx - 4, hy - 4, 8, 8); g.strokeRect(hx - 4.5, hy - 4.5, 9, 9); });
   }
 }
 function cross(px, py, r) {
@@ -1067,7 +1119,7 @@ function paste() {
   startFloat(cloneImg(S.clip.img), S.clip.x0 + S.clip.img.width / 2, S.clip.y0 + S.clip.img.height / 2, null);
   redraw();
 }
-function startFloat(img, cx, cy, sel0) { S.fl = { img, pos: [cx, cy], pivot: [cx, cy], angle: 0, ver: 0, rkey: null, rimg: null, sel0 }; setAngleUI(0); }
+function startFloat(img, cx, cy, sel0) { S.fl = { img, pos: [cx, cy], pivot: [cx, cy], angle: 0, sx: 1, sy: 1, ver: 0, rkey: null, rimg: null, sel0 }; resetFloatUI(); }
 function beginFloat(copy) {
   if (S.fl) return true;
   beginEdit();
@@ -1080,9 +1132,21 @@ function beginFloat(copy) {
   startFloat(r.img, r.x0 + r.sw / 2, r.y0 + r.sh / 2, S.sel ? S.sel.slice() : null);
   return true;
 }
+function flSize() { const fl = S.fl; return [Math.max(1, Math.round(fl.img.width * fl.sx)), Math.max(1, Math.round(fl.img.height * fl.sy))]; }
+function flBase() {
+  const fl = S.fl, [w, h] = flSize();
+  if (w === fl.img.width && h === fl.img.height) return fl.img;
+  const k = fl.ver + ':' + w + 'x' + h;
+  if (fl.bkey !== k) {
+    const iw = fl.img.width, ih = fl.img.height, out = new ImageData(w, h), s32 = new Uint32Array(fl.img.data.buffer), o32 = new Uint32Array(out.data.buffer);
+    for (let y = 0; y < h; y++) { const sy = Math.min(ih - 1, Math.floor((y + 0.5) * ih / h)); for (let x = 0; x < w; x++) o32[y * w + x] = s32[sy * iw + Math.min(iw - 1, Math.floor((x + 0.5) * iw / w))]; }
+    fl.bimg = out; fl.bkey = k;
+  }
+  return fl.bimg;
+}
 function flRimg() {
-  const fl = S.fl, key = [fl.angle.toFixed(3), S.D.rotMode, fl.ver].join('|');
-  if (fl.rkey !== key) { fl.rimg = rotateExpand(fl.img, fl.angle, S.D.rotMode, 'f' + fl.ver + ':' + fl.img.width + 'x' + fl.img.height + ':' + (fl.id || (fl.id = ++REV))); fl.rcv = null; fl.rkey = key; }
+  const fl = S.fl, [w, h] = flSize(), key = [fl.angle.toFixed(3), S.D.rotMode, fl.ver, w, h].join('|');
+  if (fl.rkey !== key) { fl.rimg = rotateExpand(flBase(), fl.angle, S.D.rotMode, 'f' + fl.ver + ':' + w + 'x' + h + ':' + (fl.id || (fl.id = ++REV))); fl.rcv = null; fl.rkey = key; }
   return fl.rimg;
 }
 function flCenter() {
@@ -1102,19 +1166,42 @@ function floatComposite() {
   return cv;
 }
 function flPolygon() {
-  const fl = S.fl, hw = fl.img.width / 2, hh = fl.img.height / 2, [px, py] = fl.pos, th = fl.angle * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+  const fl = S.fl, [fw, fh] = flSize(), hw = fw / 2, hh = fh / 2, [px, py] = fl.pos, th = fl.angle * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
   return [[px - hw, py - hh], [px + hw, py - hh], [px + hw, py + hh], [px - hw, py + hh]].map(([x, y]) => { const vx = x - fl.pivot[0], vy = y - fl.pivot[1]; return [fl.pivot[0] + vx * c - vy * s, fl.pivot[1] + vx * s + vy * c]; });
 }
+function flHandles() {
+  const [w, h] = flSize(), hw = w / 2, hh = h / 2;
+  return [['tl', -hw, -hh], ['t', 0, -hh], ['tr', hw, -hh], ['r', hw, 0], ['br', hw, hh], ['b', 0, hh], ['bl', -hw, hh], ['l', -hw, 0]];
+}
+function flLocalToWorld(lx, ly) { const [cx, cy] = flCenter(), th = S.fl.angle * Math.PI / 180, c = Math.cos(th), s = Math.sin(th); return [cx + lx * c - ly * s, cy + lx * s + ly * c]; }
 function tfDown(e) {
   if (!S.fl && !beginFloat(e.altKey)) return;
   const [fx, fy] = pxf(e);
   if (e.ctrlKey || e.metaKey) { S.fl.pivot = [fx, fy]; redraw(); return; }
+  const [W0, H0] = flSize(), tol = Math.min(Math.max(0.6, 8 / S.zoom), Math.max(0.3, Math.min(W0, H0) / 4));
+  for (const [, lx, ly] of flHandles()) {
+    const [wx, wy] = flLocalToWorld(lx, ly);
+    if (Math.abs(fx - wx) <= tol && Math.abs(fy - wy) <= tol) { S.tfDrag = { mode: 'scale', anchor: flLocalToWorld(-lx, -ly), sgx: Math.sign(lx), sgy: Math.sign(ly), W0, H0 }; return; }
+  }
   if (pointInPoly(fx, fy, flPolygon())) S.tfDrag = { mode: 'move', start: [fx, fy], pos: S.fl.pos.slice(), pivot: S.fl.pivot.slice() };
   else { const [px, py] = S.fl.pivot; S.tfDrag = { mode: 'rot', a0: Math.atan2(fy - py, fx - px), ang0: S.fl.angle }; }
 }
 function tfMove(e) {
   if (!S.fl || !S.tfDrag) return;
   const [fx, fy] = pxf(e), d = S.tfDrag;
+  if (d.mode === 'scale') {
+    const th = S.fl.angle * Math.PI / 180, c = Math.cos(th), s = Math.sin(th), mx = fx - d.anchor[0], my = fy - d.anchor[1];
+    const lx = mx * c + my * s, ly = -mx * s + my * c;
+    let nw = d.sgx ? Math.max(1, Math.round(d.sgx * lx)) : d.W0, nh = d.sgy ? Math.max(1, Math.round(d.sgy * ly)) : d.H0;
+    if (e.shiftKey && d.sgx && d.sgy) { const r = Math.max(nw / d.W0, nh / d.H0); nw = Math.max(1, Math.round(d.W0 * r)); nh = Math.max(1, Math.round(d.H0 * r)); }
+    nw = Math.min(nw, 1024); nh = Math.min(nh, 1024);
+    S.fl.sx = nw / S.fl.img.width; S.fl.sy = nh / S.fl.img.height;
+    const cx = d.anchor[0] + (d.sgx * nw / 2) * c - (d.sgy * nh / 2) * s, cy = d.anchor[1] + (d.sgx * nw / 2) * s + (d.sgy * nh / 2) * c;
+    const vx = cx - S.fl.pivot[0], vy = cy - S.fl.pivot[1];
+    S.fl.pos = [S.fl.pivot[0] + vx * c + vy * s, S.fl.pivot[1] - vx * s + vy * c];
+    setStretchUI(S.fl.sx, S.fl.sy);
+    return;
+  }
   if (d.mode === 'move') { const ddx = Math.round(fx - d.start[0]), ddy = Math.round(fy - d.start[1]); S.fl.pos = [d.pos[0] + ddx, d.pos[1] + ddy]; S.fl.pivot = [d.pivot[0] + ddx, d.pivot[1] + ddy]; }
   else {
     const [px, py] = S.fl.pivot; let ang = d.ang0 + (Math.atan2(fy - py, fx - px) - d.a0) * 180 / Math.PI;
@@ -1123,6 +1210,8 @@ function tfMove(e) {
   }
 }
 function setAngleUI(a) { const v = ((Math.round(a) % 360) + 360) % 360; O.angle.value = v; $('#o-angle-v').textContent = v + '°'; }
+function setStretchUI(sx, sy) { const a = Math.round(sx * 100), b = Math.round(sy * 100); O.sw.value = a; O.sh.value = b; $('#o-sw-v').textContent = a + '%'; $('#o-sh-v').textContent = b + '%'; }
+function resetFloatUI() { setAngleUI(0); setStretchUI(1, 1); }
 function commitFloat() {
   if (!S.fl) return;
   const layer = flLayerCanvas(), cel = curCel(), g = celCanvas(cel).getContext('2d');
@@ -1131,12 +1220,12 @@ function commitFloat() {
   cel.img = g.getImageData(0, 0, S.D.w, S.D.h); touch(cel);
   const m = new Uint8Array(S.D.w * S.D.h); let any = false;
   for (let i = 0; i < m.length; i++) if (lid.data[i * 4 + 3] > 0) { m[i] = 1; any = true; }
-  S.sel = any ? m : null; selDirty(); S.fl = null; setAngleUI(0); endEdit();
+  S.sel = any ? m : null; selDirty(); S.fl = null; resetFloatUI(); endEdit();
 }
 function cancelFloat() {
   if (!S.fl) return;
   if (S.pend) { const p = S.pend, L = S.D.layers[p.li]; L.cels[p.fi].img = cloneImg(p.img); touch(L.cels[p.fi]); L.xf[p.fi] = p.xf.slice(); S.pend = null; }
-  S.sel = S.fl.sel0; selDirty(); S.fl = null; setAngleUI(0); redraw();
+  S.sel = S.fl.sel0; selDirty(); S.fl = null; resetFloatUI(); redraw();
 }
 const flush = () => { if (S.fl) commitFloat(); };
 function floatFlip(horizontal) {
@@ -1207,18 +1296,19 @@ function setPivot(e) {
   curLayer().pivot = [Math.floor(fx) + 0.5, Math.floor(fy) + 0.5]; S.D.tcache.clear();
   status("Pivot set for layer '" + curLayer().name + "'."); redraw();
 }
+const RIG_IDS = [['#r-a', 0, ''], ['#r-x', 1, ''], ['#r-y', 2, ''], ['#r-sw', 3, '%'], ['#r-sh', 4, '%']];
 function onRigInput() {
   flush(); if (!S.rigEditing) { S.rigEditing = true; beginEdit(false); }
-  curLayer().xf[S.fi] = [+$('#r-a').value, +$('#r-x').value, +$('#r-y').value];
-  $('#r-a-v').textContent = $('#r-a').value; $('#r-x-v').textContent = $('#r-x').value; $('#r-y-v').textContent = $('#r-y').value;
+  curLayer().xf[S.fi] = RIG_IDS.map(([id]) => +$(id).value);
+  RIG_IDS.forEach(([id, i, u]) => { $(id + '-v').textContent = $(id).value + u; });
   redraw();
 }
 function onRigChange() { S.rigEditing = false; endEdit(); }
 function refreshRig() {
   const xf = curLayer().xf[S.fi];
-  [['#r-a', 0], ['#r-x', 1], ['#r-y', 2]].forEach(([id, i]) => { $(id).value = Math.round(xf[i]); $(id + '-v').textContent = Math.round(xf[i]); });
+  RIG_IDS.forEach(([id, i, u]) => { const v = Math.round(xf[i] == null ? 100 : xf[i]); $(id).value = v; $(id + '-v').textContent = v + u; });
 }
-function rigReset() { flush(); beginEdit(false); curLayer().xf[S.fi] = [0, 0, 0]; endEdit(); refreshRig(); }
+function rigReset() { flush(); beginEdit(false); curLayer().xf[S.fi] = XF0(); endEdit(); refreshRig(); }
 function rigBake() { flush(); if (isIdentity(curLayer().xf[S.fi])) return; beginEdit(true); endEdit(); refreshRig(); status('Transform baked into the pixels of this frame.'); }
 function insertTweensCmd() { flush(); const n = Math.max(1, ival($('#r-n'), 2)); pushDocUndo(); docInsertTweens(S.D, S.fi, n); S.fi = Math.min(S.fi + 1, S.D.nframes - 1); refreshAll(); status('Inserted ' + n + ' in-between frame(s).'); }
 async function swingCmd() {
@@ -1231,6 +1321,50 @@ async function swingCmd() {
   if (!Number.isFinite(a) || !Number.isFinite(b)) return;
   pushDocUndo(); docSwing(S.D, S.li, a, b, n); refreshAll();
   status("Layer '" + curLayer().name + "' now swings " + a + ".." + b + ' over ' + n + ' frames.');
+}
+function vibrance(amt) {
+  flush(); beginEdit();
+  const cel = curCel(), d = cel.img.data, { w, h } = S.D;
+  for (let i = 0; i < w * h; i++) {
+    if (d[i * 4 + 3] === 0 || (S.sel && !S.sel[i])) continue;
+    const [hh, l0, s0] = rgb2hls(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
+    if (s0 < 0.04) continue;
+    const s = amt >= 0 ? Math.min(1, s0 * (1 + amt) + amt * 0.12) : Math.max(0, s0 * (1 + amt));
+    const l = clamp(0.5 + (l0 - 0.5) * (1 + amt * 0.12), 0.02, 0.98);
+    const c = hls2rgb(hh, l, s);
+    d[i * 4] = Math.round(c[0] * 255); d[i * 4 + 1] = Math.round(c[1] * 255); d[i * 4 + 2] = Math.round(c[2] * 255);
+  }
+  touch(cel); endEdit();
+  status(amt >= 0 ? 'Vibrance boosted. Press it again for more.' : 'Colours softened.');
+}
+async function stretchFrameCmd() {
+  flush();
+  const r = await ask('Stretch whole frame', [
+    { id: 'w', label: 'Width %', type: 'number', value: 70, min: 10, max: 300 },
+    { id: 'h', label: 'Height %', type: 'number', value: 100, min: 10, max: 300 },
+    { id: 'a', label: 'Anchor', options: ['Bottom centre', 'Centre'], value: 'Bottom centre' }], 'Stretch');
+  if (!r) return;
+  const sw = clamp(parseFloat(r.w) || 100, 10, 300), sh = clamp(parseFloat(r.h) || 100, 10, 300);
+  const id = renderFrame(S.D, S.fi).getContext('2d').getImageData(0, 0, S.D.w, S.D.h), d = id.data;
+  let x0 = S.D.w, x1 = -1, y0 = S.D.h, y1 = -1;
+  for (let y = 0; y < S.D.h; y++) for (let x = 0; x < S.D.w; x++) if (d[(y * S.D.w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) { toast('This frame is empty.'); return; }
+  const ax = (x0 + x1 + 1) / 2, ay = r.a === 'Centre' ? (y0 + y1 + 1) / 2 : y1 + 1;
+  pushDocUndo();
+  S.D.layers.forEach((L, li) => { const img = layerFrame(S.D, li, S.fi).img; L.cels[S.fi] = newCel(S.D.w, S.D.h, transformImage(img, 0, [ax, ay], 0, 0, 'sharp', null, sw, sh)); L.xf[S.fi] = XF0(); });
+  refreshAll(); status('Stretched every layer in this frame to ' + sw + '% x ' + sh + '%.');
+}
+async function squashCmd() {
+  flush();
+  const r = await ask('Squash and stretch cycle', [
+    { id: 'a', label: 'Width min %', type: 'number', value: 96 }, { id: 'b', label: 'Width max %', type: 'number', value: 104 },
+    { id: 'c', label: 'Height min %', type: 'number', value: 96 }, { id: 'd', label: 'Height max %', type: 'number', value: 104 },
+    { id: 'n', label: 'Frames in loop', type: 'number', value: Math.max(4, S.D.nframes), min: 2, max: 64 }], 'Make cycle');
+  if (!r) return;
+  const a = parseFloat(r.a), b = parseFloat(r.b), c = parseFloat(r.c), d = parseFloat(r.d), n = clamp(parseInt(r.n, 10) || 0, 2, 64);
+  if (![a, b, c, d].every(Number.isFinite)) return;
+  pushDocUndo(); docSquash(S.D, S.li, clamp(a, 10, 300), clamp(b, 10, 300), clamp(c, 10, 300), clamp(d, 10, 300), n); refreshAll();
+  status("Layer '" + curLayer().name + "' now squashes and stretches over " + n + ' frames (taller = narrower).');
 }
 function gotoFrame(i) { flush(); S.fi = clamp(i, 0, S.D.nframes - 1); refreshRig(); updateStripSel(); redraw(); }
 function frameNew() { flush(); pushDocUndo(); docAddFrame(S.D, S.fi + 1, null); S.fi++; refreshAll(); }
@@ -1259,33 +1393,28 @@ function layerMove(d) { flush(); const j = S.li + d; if (j < 0 || j >= S.D.layer
 function syncColours() {
   $('#sw-p').style.background = rgb2hex(S.primary); $('#sw-s').style.background = rgb2hex(S.secondary);
   O.hex.value = rgb2hex(S.primary); refreshPalette();
+  if (WH.open && !WH.busy && typeof WH.target === 'string') wheelReload();
 }
 const swapColours = () => { [S.primary, S.secondary] = [S.secondary, S.primary]; syncColours(); };
+let lastSw = { t: 0, k: '' };
 function refreshPalette() {
   const el = $('#pal'); el.innerHTML = '';
-  S.D.palette.forEach((ramp, ri) => ramp.forEach((hx, ci) => {
-    const b = document.createElement('button'); b.style.background = hx; b.title = hx + '  (ramp ' + (ri + 1) + ', shade ' + (ci + 1) + ')';
-    const c = hex2rgb(hx);
-    if (c.join() === S.primary.slice(0, 3).join()) b.classList.add('p');
-    if (c.join() === S.secondary.slice(0, 3).join()) b.classList.add('s');
-    b.onclick = () => { S.primary = c.concat(255); syncColours(); };
-    b.oncontextmenu = (e) => { e.preventDefault(); S.secondary = c.concat(255); syncColours(); };
-    b.ondblclick = () => editSwatch(ri, ci);
-    el.appendChild(b);
-  }));
-}
-function colourPicker(initial, onPick) {
-  const inp = $('#o-colorpick'); inp.value = initial;
-  inp.oninput = () => onPick(inp.value); inp.onchange = () => onPick(inp.value);
-  inp.hidden = false; inp.style.cssText = 'position:fixed;left:-99px;top:0;opacity:0'; inp.click();
-}
-function editSwatch(ri, ci) {
-  colourPicker(S.D.palette[ri][ci], (v) => {
-    if (!v || v.toLowerCase() === S.D.palette[ri][ci]) return;
-    if (!S.swEdit) { pushDocUndo(); S.swEdit = true; setTimeout(() => { S.swEdit = false; }, 800); }
-    S.D.palette[ri][ci] = v.toLowerCase(); S.D.plook = null; refreshPalette();
+  const pc = S.primary.slice(0, 3).join(), sc = S.secondary.slice(0, 3).join();
+  S.D.palette.forEach((ramp, ri) => {
+    const row = document.createElement('div'); row.className = 'ramp';
+    ramp.forEach((hx, ci) => {
+      const b = document.createElement('button'), c = hex2rgb(hx), cs = c.join();
+      b.style.background = hx; b.title = hx + '  (ramp ' + (ri + 1) + ', shade ' + (ci + 1) + ')';
+      if (cs === pc) b.classList.add('p');
+      if (cs === sc) b.classList.add('s');
+      b.onclick = () => { const now = performance.now(), k = ri + ',' + ci, dbl = lastSw.k === k && now - lastSw.t < 400; lastSw = { t: now, k }; S.primary = c.concat(255); syncColours(); if (dbl) editSwatch(ri, ci); };
+      b.oncontextmenu = (e) => { e.preventDefault(); S.secondary = c.concat(255); syncColours(); };
+      row.appendChild(b);
+    });
+    el.appendChild(row);
   });
 }
+function editSwatch(ri, ci) { const row = $('#pal').children[ri]; openWheel({ ri, ci }, row && row.children[ci]); }
 function rampFromPrimary() { pushDocUndo(); S.D.palette.push(makeRamp(S.primary)); S.D.plook = null; refreshPalette(); status('Added a 4-shade ramp (shadow, base, light, highlight) from your primary colour.'); }
 function rampRemove() { if (S.D.palette.length > 1) { pushDocUndo(); S.D.palette.pop(); S.D.plook = null; refreshPalette(); } }
 function paletteReset() { pushDocUndo(); S.D.palette = DEFAULT_PALETTE.map((r) => r.slice()); S.D.plook = null; refreshPalette(); }
@@ -1387,7 +1516,7 @@ const TOOL_HELP = {
   line: 'Line - drag. Hold Shift to snap to angles.', rect: "Rectangle - drag. Shift = square. 'Fill shapes' fills it.", ellipse: 'Ellipse - drag. Shift = circle.',
   shade: 'Shade - left click/drag DARKENS one step along the palette ramp, right LIGHTENS.', select: 'Select - drag a box. Shift = add, Ctrl = subtract, click = deselect.',
   lasso: 'Lasso - draw around the area. Shift = add, Ctrl = subtract.', wand: 'Magic wand - selects the connected area of the same colour.',
-  transform: 'Rotate/Move - drag INSIDE to move, OUTSIDE to rotate freely (Shift = 15 degree steps, Ctrl+click = set pivot, Alt = copy). Enter applies, Esc cancels.',
+  transform: 'Rotate/Move/Stretch - drag INSIDE to move, OUTSIDE to rotate, the white square handles to stretch (Shift on a corner keeps proportions). Shift = 15 degree steps, Ctrl+click = set pivot, Alt = copy. Enter applies, Esc cancels.',
   pivot: 'Pivot - click to set the rotation pivot of the current layer (rig part).', hand: 'Hand - drag to pan the canvas.',
 };
 function buildTools() {
@@ -1456,7 +1585,7 @@ function onKey(e) {
     return;
   }
   if (k === 'Enter') { if (S.fl) commitFloat(); return; }
-  if (k === 'Escape') { if (S.fl) cancelFloat(); else deselect(); closeMenus(); return; }
+  if (k === 'Escape') { if (WH.open) { closeWheel(); return; } if (S.fl) cancelFloat(); else deselect(); closeMenus(); return; }
   if (k === 'Delete' || k === 'Backspace') { deleteSel(); e.preventDefault(); return; }
   if (k.startsWith('Arrow')) { const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k]; if (S.tool === 'transform' || S.fl || S.sel) { e.preventDefault(); nudge(d[0], d[1]); } return; }
   const t = TOOLS.find((x) => x[2].toLowerCase() === lk);
@@ -1473,12 +1602,14 @@ function docToJSON(D) {
 }
 async function docFromJSON(text) {
   const d = JSON.parse(text), D = newDoc(d.w, d.h);
-  D.fps = d.fps || 8; D.nframes = d.frames; D.rotMode = d.rot_mode === 'sharp' ? 'sharp' : 'rotsprite'; D.palette = (d.palette || DEFAULT_PALETTE).map((r) => r.slice());
+  D.fps = d.fps || 8; D.nframes = d.frames; D.rotMode = d.rot_mode === 'sharp' ? 'sharp' : 'rotsprite'; const pal = d.palette && d.palette.length ? d.palette : DEFAULT_PALETTE;
+  const oldDefault = pal.length === 10 && pal[0][0] === '#2b5e3a' && pal[5][0] === '#6b1d2a';
+  D.palette = (oldDefault ? DEFAULT_PALETTE : pal).map((r) => r.slice());
   D.layers = [];
   for (const ld of d.layers) {
     const cels = [];
     for (const b64 of ld.cels) { const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = () => rej(new Error('bad image data')); im.src = 'data:image/png;base64,' + b64; }); cels.push(newCel(D.w, D.h, imageToData(im, D.w, D.h))); }
-    D.layers.push({ name: ld.name, visible: ld.visible !== false, opacity: ld.opacity == null ? 100 : ld.opacity, pivot: (ld.pivot || [D.w / 2, D.h / 2]).slice(), cels, xf: ld.xf.map((x) => x.map(Number)) });
+    D.layers.push({ name: ld.name, visible: ld.visible !== false, opacity: ld.opacity == null ? 100 : ld.opacity, pivot: (ld.pivot || [D.w / 2, D.h / 2]).slice(), cels, xf: ld.xf.map(xfPad) });
   }
   if (!D.layers.length || D.layers.some((L) => L.cels.length !== D.nframes)) throw new Error('Invalid project file.');
   return D;
@@ -1557,9 +1688,9 @@ function buildMenus() {
   const defs = {
     File: [['New...', cmdNew, 'Ctrl+N'], ['Open project...', cmdOpen, 'Ctrl+O'], ['Save project', cmdSave, 'Ctrl+S'], null, ['Import image as layer...', cmdImportLayer], ['Import sprite sheet (slice into frames)...', cmdImportSheet], null, ['Export PNG (current frame)...', cmdExportPng], ['Export sprite sheet (Godot-ready)...', cmdExportSheet], ['Export animated GIF...', cmdExportGif]],
     Edit: [['Undo', doUndo, 'Ctrl+Z'], ['Redo', doRedo, 'Ctrl+Y'], null, ['Cut', () => copySel(true), 'Ctrl+X'], ['Copy', () => copySel(false), 'Ctrl+C'], ['Paste', paste, 'Ctrl+V'], ['Delete selection', deleteSel, 'Del'], null, ['Select all', selectAll, 'Ctrl+A'], ['Deselect', deselect, 'Ctrl+D']],
-    Image: [['Flip layer horizontally', () => layerOp('fliph')], ['Flip layer vertically', () => layerOp('flipv')], ['Rotate layer 90 deg clockwise', () => layerOp('rot90')], null, ['Auto-shade (uses light direction)', autoShade], ['Add outline (primary colour)', addOutline], null, ['Resize canvas...', cmdResize]],
-    Frame: [['New blank frame', frameNew, 'Ctrl+Enter'], ['Duplicate frame', frameDup], ['Delete frame', frameDel], null, ['Copy frame', frameCopy], ['Paste over frame', framePaste], null, ["Copy this layer's cel", celCopy], ['Paste cel into this layer', celPaste], ['Grab this layer from previous frame', grabPrev], null, ['Insert in-betweens after this frame', insertTweensCmd], ['Swing layer (auto cycle)...', swingCmd]],
-    Palette: [['New ramp from primary colour', rampFromPrimary], ['Palette from image...', paletteFromImageCmd], ['Remove last ramp', rampRemove], ['Reset to default palette', paletteReset]],
+    Image: [['Flip layer horizontally', () => layerOp('fliph')], ['Flip layer vertically', () => layerOp('flipv')], ['Rotate layer 90 deg clockwise', () => layerOp('rot90')], null, ['Auto-shade (uses light direction)', autoShade], ['Add outline (primary colour)', addOutline], null, ['Boost vibrance', () => vibrance(0.3)], ['Soften colours', () => vibrance(-0.25)], null, ['Stretch whole frame (side view)...', stretchFrameCmd], ['Resize canvas...', cmdResize]],
+    Frame: [['New blank frame', frameNew, 'Ctrl+Enter'], ['Duplicate frame', frameDup], ['Delete frame', frameDel], null, ['Copy frame', frameCopy], ['Paste over frame', framePaste], null, ["Copy this layer's cel", celCopy], ['Paste cel into this layer', celPaste], ['Grab this layer from previous frame', grabPrev], null, ['Insert in-betweens after this frame', insertTweensCmd], ['Swing layer (auto cycle)...', swingCmd], ['Squash & stretch cycle...', squashCmd]],
+    Palette: [['Colour wheel...', () => openWheel('primary', $('#sw-p'))], ['New ramp from primary colour', rampFromPrimary], ['Palette from image...', paletteFromImageCmd], ['Remove last ramp', rampRemove], ['Reset to default palette', paletteReset]],
     View: [['Toggle pixel grid', () => { S.grid = !S.grid; redraw(); }], ['Toggle onion skin', () => { S.onion = !S.onion; redraw(); }], ['Canvas background: checker', () => setCbg('Checker')], ['Canvas background: light', () => setCbg('Light')], ['Canvas background: dark', () => setCbg('Dark')], null, ['Zoom in', () => zoomCenter(1), '+'], ['Zoom out', () => zoomCenter(-1), '-'], ['Fit to window', fitView, 'Ctrl+0']],
     Help: [['Shortcuts & tips', showHelp], ['About', () => info('Pixel Studio', 'A lightweight pixel-art editor with free rotation and rig animation. Everything runs in your browser; your work autosaves in this browser and can be saved as a project file.')]],
   };
@@ -1589,8 +1720,73 @@ function showHelp() {
     'Space+drag or middle mouse = pan. Mouse wheel = zoom. X swaps colours. [ ] changes brush size. , and . = previous / next frame.',
     'Ctrl+Z / Ctrl+Y undo/redo. Ctrl+C/X/V copy/cut/paste (works across frames and layers). Arrow keys nudge the selection. Ctrl+Enter = new frame.', '',
     'FREE ROTATION: select an area (or nothing = the whole layer), press T, drag OUTSIDE the box to rotate, INSIDE to move. Shift = 15 degree steps. Ctrl+click sets the pivot. Enter applies, Esc cancels.', '',
+    'STRETCH: in the Rotate tool (T) pick up your art, then drag the white square handles to stretch it like a box (Shift on a corner keeps proportions), or use the Stretch W / H sliders. Narrow 70% gives a quick side-view look for walk and idle frames. Image > Stretch whole frame squeezes every layer at once. In the Rig tab, Stretch W / H are per frame and Squash and stretch cycle makes idle breathing for you.', '',
     'EASY ANIMATION: put each body part on its own layer, set its pivot (K), duplicate the frame, then change Angle in the Rig tab. Use "Insert in-betweens" or "Swing layer" to let the computer do the rest.', '',
     'SHADING: the Shade tool darkens (left) / lightens (right) one step along the 4-shade ramps. Auto-shade shades a whole shape from a light direction. Patterns plus "2-colour" give instant dithering and texture.'].join('\n'));
+}
+
+/* ===================================================================== colour wheel */
+const hsv2rgb = (h, s, v) => { const i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s); return [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][((i % 6) + 6) % 6].map((x) => Math.round(x * 255)); };
+const rgb2hsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { if (mx === r) h = ((g - b) / d + 6) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h /= 6; } return [h, mx ? d / mx : 0, mx]; };
+const WH = { open: false, h: 0, s: 1, v: 1, target: 'primary', busy: false, drag: false, base: null, baseV: -1 };
+function wheelTargetRGB() { if (WH.target === 'primary') return S.primary.slice(0, 3); if (WH.target === 'secondary') return S.secondary.slice(0, 3); return hex2rgb(S.D.palette[WH.target.ri][WH.target.ci]); }
+function drawWheel() {
+  const cv = $('#wheel'), g = cv.getContext('2d'), N = cv.width, R = N / 2 - 2;
+  if (WH.baseV !== WH.v) {
+    const id = g.createImageData(N, N), d32 = new Uint32Array(id.data.buffer);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const dx = x + 0.5 - N / 2, dy = y + 0.5 - N / 2, r = Math.hypot(dx, dy);
+      if (r > R) continue;
+      const c = hsv2rgb((Math.atan2(dy, dx) / (2 * Math.PI) + 1) % 1, Math.min(1, r / R), WH.v);
+      d32[y * N + x] = ((255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0;
+    }
+    WH.base = id; WH.baseV = WH.v;
+  }
+  g.clearRect(0, 0, N, N); g.putImageData(WH.base, 0, 0);
+  const ang = WH.h * 2 * Math.PI, rr = WH.s * R, mx = N / 2 + Math.cos(ang) * rr, my = N / 2 + Math.sin(ang) * rr;
+  g.beginPath(); g.arc(mx, my, 7, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = '#000'; g.stroke(); g.lineWidth = 1.5; g.strokeStyle = '#fff'; g.stroke();
+}
+function wheelUI() {
+  drawWheel();
+  const rgb = hsv2rgb(WH.h, WH.s, WH.v);
+  $('#wh-hex').value = rgb2hex(rgb); $('#wh-v').value = Math.round(WH.v * 100); $('#wh-v-o').textContent = Math.round(WH.v * 100);
+  const el = $('#wh-ramp'); el.innerHTML = '';
+  makeRamp(rgb).forEach((hx) => { const b = document.createElement('button'); b.style.background = hx; b.title = hx; b.onclick = () => { const c = hex2rgb(hx); [WH.h, WH.s, WH.v] = rgb2hsv(c[0], c[1], c[2]); wheelApply(); }; el.appendChild(b); });
+}
+function wheelApply() {
+  const rgb = hsv2rgb(WH.h, WH.s, WH.v); WH.busy = true;
+  if (WH.target === 'primary') S.primary = rgb.concat(255);
+  else if (WH.target === 'secondary') S.secondary = rgb.concat(255);
+  else { S.D.palette[WH.target.ri][WH.target.ci] = rgb2hex(rgb); S.D.plook = null; markDirty(); }
+  syncColours(); WH.busy = false; wheelUI();
+}
+function wheelReload() { const c = wheelTargetRGB(); [WH.h, WH.s, WH.v] = rgb2hsv(c[0], c[1], c[2]); wheelUI(); }
+function openWheel(target, anchor) {
+  const pop = $('#wheelpop'), isSwatch = typeof target === 'object';
+  if (isSwatch) pushDocUndo();
+  WH.target = target; WH.baseV = -1; WH.open = true;
+  $('#wh-target').value = target === 'secondary' ? 'Secondary' : 'Primary'; $('#wh-target').disabled = isSwatch;
+  $('#wh-title').textContent = isSwatch ? 'Tune swatch' : 'Colour wheel';
+  pop.hidden = false;
+  const c = wheelTargetRGB(); [WH.h, WH.s, WH.v] = rgb2hsv(c[0], c[1], c[2]); wheelUI();
+  const r = (anchor || $('#sw-p')).getBoundingClientRect(), pw = pop.offsetWidth || 236, ph = pop.offsetHeight || 420;
+  let left = r.right + 10; if (left + pw > innerWidth - 8) left = r.left - pw - 10;
+  pop.style.left = clamp(left, 8, Math.max(8, innerWidth - pw - 8)) + 'px';
+  pop.style.top = clamp(r.bottom - ph, 8, Math.max(8, innerHeight - ph - 8)) + 'px';
+}
+function closeWheel() { WH.open = false; WH.drag = false; $('#wheelpop').hidden = true; }
+function initWheel() {
+  const cv = $('#wheel');
+  const pick = (e) => { const r = cv.getBoundingClientRect(), N = cv.width, x = (e.clientX - r.left) * N / r.width - N / 2, y = (e.clientY - r.top) * N / r.height - N / 2, R = N / 2 - 2; WH.h = (Math.atan2(y, x) / (2 * Math.PI) + 1) % 1; WH.s = Math.min(1, Math.hypot(x, y) / R); wheelApply(); };
+  cv.addEventListener('pointerdown', (e) => { e.preventDefault(); cv.setPointerCapture(e.pointerId); WH.drag = true; pick(e); });
+  cv.addEventListener('pointermove', (e) => { if (WH.drag) pick(e); });
+  cv.addEventListener('pointerup', () => { WH.drag = false; }); cv.addEventListener('pointercancel', () => { WH.drag = false; });
+  $('#wh-v').oninput = () => { WH.v = +$('#wh-v').value / 100; wheelApply(); };
+  $('#wh-hex').onchange = () => { const v = $('#wh-hex').value.trim().replace(/^#?/, '#'); if (/^#[0-9a-f]{6}$/i.test(v)) { const c = hex2rgb(v); [WH.h, WH.s, WH.v] = rgb2hsv(c[0], c[1], c[2]); wheelApply(); } else { toast('Enter a hex colour like #62e05a.'); wheelUI(); } };
+  $('#wh-target').onchange = () => { WH.target = $('#wh-target').value.toLowerCase(); wheelReload(); };
+  $('#wh-addramp').onclick = () => { pushDocUndo(); S.D.palette.push(makeRamp(hsv2rgb(WH.h, WH.s, WH.v))); S.D.plook = null; refreshPalette(); toast('Added a new 4-shade ramp at the end of your palette.'); };
+  $('#wh-close').onclick = closeWheel;
+  document.addEventListener('pointerdown', (e) => { if (WH.open && !e.target.closest('#wheelpop, #sw-p, #sw-s, #b-wheel')) closeWheel(); }, true);
 }
 
 /* ===================================================================== example sprite */
@@ -1616,7 +1812,7 @@ function init() {
   Object.keys(PATTERNS).forEach((k) => { const o = document.createElement('option'); o.textContent = k; O.pat.appendChild(o); });
   Object.keys(LIGHT_DIRS).forEach((k) => { const o = document.createElement('option'); o.textContent = k; O.light.appendChild(o); });
   S.grid = true; S.onion = false; S.tab = 'pal';
-  buildTools(); buildMenus();
+  buildTools(); buildMenus(); initWheel();
   view.addEventListener('pointerdown', onDown); view.addEventListener('pointermove', onMove); view.addEventListener('pointerup', onUp); view.addEventListener('pointercancel', onUp);
   view.addEventListener('wheel', onWheel, { passive: false }); view.addEventListener('contextmenu', (e) => e.preventDefault());
   view.addEventListener('pointerleave', () => { S.mouse = [null, null]; redraw(); });
@@ -1625,20 +1821,28 @@ function init() {
   window.addEventListener('beforeunload', () => { if (S.dirty) autosave(); });
   new ResizeObserver(() => { const old = [S.cw, S.ch]; layoutView(); if (!S.D) return; if (!S.zoomed) fitView(); else { S.ox += Math.round((S.cw - old[0]) / 2); S.oy += Math.round((S.ch - old[1]) / 2); redraw(); } }).observe($('#stage'));
   $('#b-undo').onclick = doUndo; $('#b-redo').onclick = doRedo; $('#b-zin').onclick = () => zoomCenter(1); $('#b-zout').onclick = () => zoomCenter(-1); $('#b-fit').onclick = fitView;
-  $('#b-swap').onclick = swapColours; $('#sw-p').onclick = () => colourPicker(rgb2hex(S.primary), (v) => { S.primary = hex2rgb(v).concat(255); syncColours(); });
-  $('#sw-s').onclick = () => colourPicker(rgb2hex(S.secondary), (v) => { S.secondary = hex2rgb(v).concat(255); syncColours(); });
-  O.angle.oninput = () => { const v = +O.angle.value; if (!S.fl && !beginFloat(false)) { setAngleUI(0); return; } setAngleUI(v); S.fl.angle = v; redraw(); };
+  $('#b-swap').onclick = swapColours; $('#sw-p').onclick = () => openWheel('primary', $('#sw-p'));
+  $('#sw-s').onclick = () => openWheel('secondary', $('#sw-s'));
+  O.angle.oninput = () => { const v = +O.angle.value; if (!S.fl && !beginFloat(false)) { resetFloatUI(); return; } setAngleUI(v); S.fl.angle = v; redraw(); };
   O.rotmode.onchange = () => { S.D.rotMode = O.rotmode.value; S.D.tcache.clear(); if (S.fl) S.fl.rkey = null; markDirty(); redraw(); };
   $('#b-apply').onclick = commitFloat; $('#b-cancel').onclick = cancelFloat; $('#b-fliph').onclick = () => floatFlip(true); $('#b-flipv').onclick = () => floatFlip(false);
-  $('#b-autoshade').onclick = autoShade; $('#b-outline').onclick = addOutline;
+  const onStretch = () => {
+    const a = clamp(+O.sw.value, 10, 300), b = clamp(+O.sh.value, 10, 300);
+    if (!S.fl && !beginFloat(false)) { resetFloatUI(); return; }
+    S.fl.sx = a / 100; S.fl.sy = b / 100; setStretchUI(S.fl.sx, S.fl.sy); redraw();
+  };
+  O.sw.oninput = onStretch; O.sh.oninput = onStretch;
+  $('#b-narrow').onclick = () => { if (!S.fl && !beginFloat(false)) return; S.fl.sx = 0.7; setStretchUI(S.fl.sx, S.fl.sy); redraw(); };
+  $('#b-sreset').onclick = () => { if (!S.fl) return; S.fl.sx = 1; S.fl.sy = 1; setStretchUI(1, 1); redraw(); };
+  $('#b-autoshade').onclick = autoShade; $('#b-outline').onclick = addOutline; $('#b-vib').onclick = () => vibrance(0.3); $('#b-vibm').onclick = () => vibrance(-0.25);
   $('#b-play').onclick = togglePlay; O.fps.onchange = () => { S.D.fps = clamp(ival(O.fps, 8), 1, 60); }; ['pbg', 'pz', 'tile'].forEach((k) => { O[k].onchange = refreshPreview; });
   O.hex.onchange = () => { const v = O.hex.value.trim(); if (/^#?[0-9a-f]{6}$/i.test(v)) { S.primary = hex2rgb(v).concat(255); syncColours(); } else { toast('Enter a hex colour like #62b653.'); O.hex.value = rgb2hex(S.primary); } };
-  $('#b-ramp').onclick = rampFromPrimary; $('#b-palimg').onclick = paletteFromImageCmd;
+  $('#b-ramp').onclick = rampFromPrimary; $('#b-wheel').onclick = () => openWheel('primary', $('#b-wheel')); $('#b-palimg').onclick = paletteFromImageCmd;
   document.querySelectorAll('#tabs button').forEach((b) => { b.onclick = () => setTab(b.dataset.t); });
   $('#l-add').onclick = layerAdd; $('#l-dup').onclick = layerDup; $('#l-del').onclick = layerDel; $('#l-up').onclick = () => layerMove(1); $('#l-down').onclick = () => layerMove(-1);
   $('#l-op').oninput = () => { curLayer().opacity = +$('#l-op').value; $('#l-op-v').textContent = $('#l-op').value; markDirty(); tlDirty(); redraw(); };
-  ['#r-a', '#r-x', '#r-y'].forEach((id) => { $(id).oninput = onRigInput; $(id).onchange = onRigChange; });
-  $('#r-pivot').onclick = () => selectTool('pivot'); $('#r-reset').onclick = rigReset; $('#r-bake').onclick = rigBake; $('#r-tween').onclick = insertTweensCmd; $('#r-swing').onclick = swingCmd;
+  RIG_IDS.forEach(([id]) => { $(id).oninput = onRigInput; $(id).onchange = onRigChange; });
+  $('#r-pivot').onclick = () => selectTool('pivot'); $('#r-reset').onclick = rigReset; $('#r-bake').onclick = rigBake; $('#r-tween').onclick = insertTweensCmd; $('#r-swing').onclick = swingCmd; $('#r-squash').onclick = squashCmd; $('#r-stretchframe').onclick = stretchFrameCmd;
   // timeline controls
   const tl = $('#tlbar');
   [['|<', () => gotoFrame(0)], ['<', () => gotoFrame(S.fi - 1)], ['>', () => gotoFrame(S.fi + 1)], ['>|', () => gotoFrame(S.D.nframes - 1)], null,
@@ -1655,8 +1859,11 @@ function init() {
   const start = (D, name) => { S.D = D; S.fi = S.li = 0; updateName(name); selectTool('pencil'); syncColours(); fitView(); refreshAll(); S.dirty = false; updateTitle(); if (!loaded) status('Example sprite loaded: press Play, then try the Rotate tool (T) on the sword. File > New for a blank canvas.'); };
   if (loaded) docFromJSON(loaded).then((D) => start(D, 'sprite')).catch(() => { loaded = null; start(demoDoc(), 'example-hero'); });
   else start(demoDoc(), 'example-hero');
-  window.__ps = { S, O, ival, rotateExpand, transformImage, rotMul90, encodeGIF, lzwEncode, docFromJSON, docToJSON, newDoc, demoDoc, loadDoc, shiftColor, makeRamp, paletteFromImage, scale2x, docInsertTweens, docSwing, parseSize, renderFrame, pxi, selectTool, beginFloat, commitFloat, cancelFloat, doUndo, doRedo, autoShade, addOutline, frameDup, frameNew, copySel, paste, gotoFrame, layerAdd, layerOp, rigBake, saveFile };
+  window.__ps = { S, O, ival, rotateExpand, transformImage, rotMul90, encodeGIF, lzwEncode, docFromJSON, docToJSON, newDoc, demoDoc, loadDoc, shiftColor, makeRamp, paletteFromImage, scale2x, docInsertTweens, docSwing, parseSize, renderFrame, pxi, selectTool, beginFloat, commitFloat, cancelFloat, doUndo, doRedo, autoShade, addOutline, frameDup, frameNew, copySel, paste, gotoFrame, layerAdd, layerOp, rigBake, saveFile, WH, hsv2rgb, rgb2hsv, openWheel, closeWheel, vibrance, docSquash, flSize, flHandles, DEFAULT_PALETTE, XF0, stretchFrameCmd, squashCmd };
 }
 init();
 })();
 </script>
+
+</body>
+</html>
